@@ -13,7 +13,6 @@ struct ContentView: View {
     @StateObject private var vm = AppState()
     
     var body: some View {
-        AnyView
         NavigationSplitView {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {

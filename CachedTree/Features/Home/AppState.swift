@@ -4,6 +4,7 @@
 //
 //  Created by Ivan Tishchenko on 20.08.2025.
 //
+import Foundation
 import Combine
 
 @MainActor
@@ -35,7 +36,7 @@ final class AppState: ObservableObject {
     }
     
     func refreshCacheSnapshot() {
-        Task { @MainActor in
+        Task {
             self.cacheTree = await cache.snapshot()
         }
     }
@@ -44,12 +45,11 @@ final class AppState: ObservableObject {
         Task {
             await db.resetToDefaults()
             await cache.clearAll()
-            await MainActor.run { [weak self] in
-                self?.selectedDB = nil;
-                self?.selectedCache = nil
-            }
             await refreshDBSnapshot()
-            await MainActor.run { [weak self] in self?.refreshCacheSnapshot() }
+            selectedDB = nil;
+            selectedCache = nil
+            
+            refreshCacheSnapshot()
         }
     }
     
@@ -58,7 +58,7 @@ final class AppState: ObservableObject {
         guard let id = selectedDB else { return }
         Task {
             _ = try? await cache.loadElement(id: id)
-            await MainActor.run { [weak self] in self?.refreshCacheSnapshot() }
+            refreshCacheSnapshot()
         }
     }
     
@@ -67,7 +67,7 @@ final class AppState: ObservableObject {
         guard let id = selectedCache else { return }
         Task {
             await cache.deleteSubtree(id: id)
-            await MainActor.run { [weak self] in self?.refreshCacheSnapshot() }
+            refreshCacheSnapshot()
         }
     }
     
@@ -83,10 +83,8 @@ final class AppState: ObservableObject {
         let text = valueEditorText
         Task {
             await cache.editValue(id: id, newValue: text)
-            await MainActor.run { [weak self] in
-                self?.showValueEditor = false
-                self?.refreshCacheSnapshot()
-            }
+            showValueEditor = false
+            refreshCacheSnapshot()
         }
     }
     
